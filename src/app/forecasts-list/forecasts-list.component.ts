@@ -3,15 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
-  signal,
 } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { rxResource, toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { tap } from "rxjs/operators";
 import { WeatherService } from "../weather.service";
-import { Forecast } from "./forecast.type";
 
 @Component({
   selector: "app-forecasts-list",
@@ -27,12 +23,8 @@ export class ForecastsListComponent {
   private routeParams = toSignal(this.route.params);
   private zipcode = computed(() => this.routeParams()?.["zipcode"]);
 
-  forecast = signal<Forecast | undefined>(undefined);
-
-  private _fetchForecast = effect(() => {
-    this.weatherService
-      .getForecast(this.zipcode())
-      .pipe(tap((forecast) => this.forecast.set(forecast)))
-      .subscribe();
+  forecast = rxResource({
+    request: () => this.zipcode(),
+    loader: ({ request }) => this.weatherService.getForecast(request),
   });
 }

@@ -1,8 +1,5 @@
 <div>
-  <app-tab-container
-    (close)="removeLocation($event)"
-    [(selectedIndex)]="selectedIndex"
-  >
+  <app-tab-container (close)="removeLocation($event)">
     @for(tabData of tabDatas(); track tabData.id;){
     <app-tab [title]="tabData.title" [id]="tabData.id">
       <app-condition-card [location]="tabData.data"></app-condition-card>

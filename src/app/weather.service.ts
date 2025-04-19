@@ -1,8 +1,9 @@
-import { effect, inject, Injectable, Signal, signal } from "@angular/core";
+import { computed, inject, Injectable } from "@angular/core";
 import { EMPTY, forkJoin, Observable, of } from "rxjs";
 import { catchError, map, tap } from "rxjs/operators";
 
 import { HttpClient } from "@angular/common/http";
+import { rxResource } from "@angular/core/rxjs-interop";
 import { ConditionsAndZip } from "./conditions-and-zip.type";
 import { CurrentConditions } from "./current-conditions/current-conditions.type";
 import { Forecast } from "./forecasts-list/forecast.type";
@@ -20,29 +21,26 @@ export class WeatherService {
   private locationService = inject(LocationService);
   private cachingService = inject(CachingService);
 
-  private currentConditions = signal<ConditionsAndZip[]>([]);
-  private locations = this.locationService.locations;
-
-  private _listenToLocationChanges = effect(() => {
-    // handle case, when there is no data to fetch
-    if (this.locations().length === 0) {
-      this.currentConditions.set([]);
-      return;
-    }
-
-    // load conditions for all locations in parallel
-    forkJoin(
-      this.locations().map((zipcode) =>
-        this.getFromCacheOrFetch(`conditions/${zipcode}`, () =>
-          this.fetchConditions(zipcode)
-        )
-      )
-    ).subscribe((data) => this.currentConditions.set(data));
+  public currentConditionsByZip = computed(() => {
+    const conditionsResource = this.currentConditionsResource;
+    if (conditionsResource.isLoading()) return [];
+    return conditionsResource.value();
   });
 
-  getCurrentConditions(): Signal<ConditionsAndZip[]> {
-    return this.currentConditions.asReadonly();
-  }
+  private currentConditionsResource = rxResource({
+    request: () => this.locationService.locations(),
+    loader: ({ request }) => {
+      // load conditions for all locations in parallel
+      if (request.length === 0) return of([]);
+      return forkJoin(
+        request.map((zipcode) =>
+          this.getFromCacheOrFetch(`conditions/${zipcode}`, () =>
+            this.fetchConditions(zipcode)
+          )
+        )
+      );
+    },
+  });
 
   getForecast(zipcode: string): Observable<Forecast> {
     return this.getFromCacheOrFetch(`forecast/${zipcode}`, () =>

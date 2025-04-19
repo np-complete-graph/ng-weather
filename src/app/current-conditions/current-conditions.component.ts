@@ -3,10 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
-  signal,
-  Signal,
 } from "@angular/core";
 import { TabContainerComponent } from "app/shared/components/tab-container/tab-container.component";
 import { TabComponent } from "app/shared/components/tab/tab.component";
@@ -20,8 +17,6 @@ export interface TabData<T> {
   title: string;
   data: T;
 }
-
-const KEY_TAB_INDEX = "tab.index";
 
 @Component({
   selector: "app-current-conditions",
@@ -39,31 +34,15 @@ export class CurrentConditionsComponent {
   private weatherService = inject(WeatherService);
   protected locationService = inject(LocationService);
 
-  selectedIndex = signal(0);
-
-  protected currentConditionsByZip: Signal<ConditionsAndZip[]> =
-    this.weatherService.getCurrentConditions();
   protected tabDatas = computed(() =>
-    this.currentConditionsByZip().map<TabData<ConditionsAndZip>>(
-      (condition) => ({
+    this.weatherService
+      .currentConditionsByZip()
+      .map<TabData<ConditionsAndZip>>((condition) => ({
         id: condition.zip,
         title: `${condition?.data?.name ?? "unknown"} (${condition.zip})`,
         data: condition,
-      })
-    )
+      }))
   );
-
-  constructor() {
-    // continue on tab, where user left the page
-    const storedTabIndex = localStorage.getItem(KEY_TAB_INDEX);
-    if (storedTabIndex) {
-      this.selectedIndex.set(+storedTabIndex);
-    }
-
-    effect(() =>
-      localStorage.setItem(KEY_TAB_INDEX, this.selectedIndex().toString())
-    );
-  }
 
   removeLocation(zipcode: string) {
     this.locationService.removeLocation(zipcode);

@@ -33,15 +33,15 @@ export class LocationService {
 
   /**
    * Search zipcodes by city name.
-   * @param name of city with a length of three or more characters
-   * @returns a list of zipcodes with their names
+   * @param query name city with a length of three or more characters
+   * @returns a list of zipcodes belonging to the queried city
    */
-  getZipcodesByName(name: string): Observable<string[]> {
-    if (name.length < 3) return EMPTY;
+  queryZipcodesByCityName(query: string): Observable<string[]> {
+    if (query.length < 3) return EMPTY;
 
     return this.http
       .get<{ results: string[] }>(
-        `${LocationService.ZIPCODE_URL}&city=${encodeURIComponent(name)}`
+        `${LocationService.ZIPCODE_URL}&city=${encodeURIComponent(query)}`
       )
       .pipe(map((response) => response.results));
   }

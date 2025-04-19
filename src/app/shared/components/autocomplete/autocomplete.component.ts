@@ -8,14 +8,13 @@ export interface AutocompleteOption {
   id: string;
   description: string;
 }
+
 @Component({
   selector: "app-autocomplete",
   templateUrl: "./autocomplete.component.html",
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
 })
 export class AutocompleteComponent<T extends AutocompleteOption> {
-  showDropdown = signal(false);
-
   placeholder = input("");
   filteredOptions = input.required<T[]>();
 
@@ -23,6 +22,9 @@ export class AutocompleteComponent<T extends AutocompleteOption> {
   selected = output<T | string>();
 
   queryInput = new FormControl<string>("", { updateOn: "change" });
+  showDropdown = signal(false);
+
+  // debounce input changes and filter for three or more characters
   private queryChanges = toSignal(
     this.queryInput.valueChanges.pipe(
       filter((v) => v?.length >= 3),
@@ -32,11 +34,12 @@ export class AutocompleteComponent<T extends AutocompleteOption> {
   );
 
   constructor() {
+    // listen to debounced and filtered changes and adapt query model
     effect(() => {
       const query = this.queryChanges();
       this.query.set(query);
 
-      if (query.length < 3) return;
+      if (query?.length < 3) return;
       this.showDropdown.set(true);
     });
   }

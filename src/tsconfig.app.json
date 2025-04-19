@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "module": "ESNext",
+    "module": "ES2020",
     "baseUrl": "",
     "types": []
   },

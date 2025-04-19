@@ -1,33 +1,45 @@
-import { Injectable } from '@angular/core';
-import {WeatherService} from "./weather.service";
+import { effect, Injectable, signal } from "@angular/core";
 
-export const LOCATIONS : string = "locations";
+export const LOCATIONS: string = "locations";
 
 @Injectable()
 export class LocationService {
+  private _locations = signal<string[]>([]);
+  public locations = this._locations.asReadonly();
 
-  locations : string[] = [];
-
-  constructor(private weatherService : WeatherService) {
+  constructor() {
     let locString = localStorage.getItem(LOCATIONS);
-    if (locString)
-      this.locations = JSON.parse(locString);
-    for (let loc of this.locations)
-      this.weatherService.addCurrentConditions(loc);
-  }
-
-  addLocation(zipcode : string) {
-    this.locations.push(zipcode);
-    localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-    this.weatherService.addCurrentConditions(zipcode);
-  }
-
-  removeLocation(zipcode : string) {
-    let index = this.locations.indexOf(zipcode);
-    if (index !== -1){
-      this.locations.splice(index, 1);
-      localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-      this.weatherService.removeCurrentConditions(zipcode);
+    if (locString) {
+      try {
+        this._locations.set(JSON.parse(locString));
+      } catch (err: unknown) {
+        console.error("Error parsing locations from localStorage:" + err);
+      }
     }
+
+    // keep localStorage synced with signal
+    effect(() => {
+      localStorage.setItem(LOCATIONS, JSON.stringify(this._locations()));
+    });
+  }
+
+  addLocation(zipcode: string) {
+    if (zipcode.length <= 0) {
+      console.info("Not adding empty location");
+      return;
+    }
+
+    if (this._locations().find((location) => location === zipcode)) {
+      console.info("Not adding location, as it already exists");
+      return;
+    }
+
+    this._locations.update((locations) => [...locations, zipcode]);
+  }
+
+  removeLocation(zipcode: string) {
+    this._locations.update((locations) =>
+      locations.filter((l) => l !== zipcode)
+    );
   }
 }

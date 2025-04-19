@@ -1,0 +1,26 @@
+@if(location(); as location) {
+<div class="card well">
+  @if(location.data){
+  <div>
+    <h3>{{ location.data.name }} ({{ location.zip }})</h3>
+    <h4>Current conditions: {{ location.data.weather[0].main }}</h4>
+    <h4>Temperatures today:</h4>
+    <p>
+      Current {{ location.data.main.temp | number : ".0-0" }} - Max
+      {{ location.data.main.temp_max | number : ".0-0" }} - Min
+      {{ location.data.main.temp_min | number : ".0-0" }}
+    </p>
+    <p>
+      <a [routerLink]="['/forecast', location.zip]"
+        >Show 5-day forecast for {{ location.data.name }}</a
+      >
+    </p>
+  </div>
+  <div>
+    <img [src]="weatherService.getWeatherIcon(location.data.weather[0].id)" />
+  </div>
+  } @else {
+  <p>Location with zip-code {{ location.zip }} could not be found.</p>
+  }
+</div>
+}

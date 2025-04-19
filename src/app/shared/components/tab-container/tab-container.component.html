@@ -1,0 +1,16 @@
+<div class="tab-title-container">
+  @for (tab of tabs(); track tab.id(); let i = $index) {
+  <div
+    class="item"
+    role="button"
+    (click)="selectedIndex.set(i)"
+    [class.active]="i === selectedIndex()"
+  >
+    {{ tab.title() }}
+
+    <span class="close" (click)="closeTab($event, tab.id())">&times;</span>
+  </div>
+  }
+</div>
+
+<ng-container [ngTemplateOutlet]="selectedTabTemplate()"></ng-container>

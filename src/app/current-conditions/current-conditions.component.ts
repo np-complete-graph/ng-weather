@@ -1,22 +1,71 @@
-import {Component, inject, Signal} from '@angular/core';
-import {WeatherService} from "../weather.service";
-import {LocationService} from "../location.service";
-import {Router} from "@angular/router";
-import {ConditionsAndZip} from '../conditions-and-zip.type';
+import { CommonModule } from "@angular/common";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  Signal,
+} from "@angular/core";
+import { TabContainerComponent } from "app/shared/components/tab-container/tab-container.component";
+import { TabComponent } from "app/shared/components/tab/tab.component";
+import { ConditionCardComponent } from "../condition-card/condition-card.component";
+import { ConditionsAndZip } from "../conditions-and-zip.type";
+import { LocationService } from "../location.service";
+import { WeatherService } from "../weather.service";
+
+export interface TabData<T> {
+  id: string;
+  title: string;
+  data: T;
+}
+
+const KEY_TAB_INDEX = "tab.index";
 
 @Component({
-  selector: 'app-current-conditions',
-  templateUrl: './current-conditions.component.html',
-  styleUrls: ['./current-conditions.component.css']
+  selector: "app-current-conditions",
+  templateUrl: "./current-conditions.component.html",
+  styleUrls: ["./current-conditions.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    TabContainerComponent,
+    TabComponent,
+    ConditionCardComponent,
+  ],
 })
 export class CurrentConditionsComponent {
-
   private weatherService = inject(WeatherService);
-  private router = inject(Router);
   protected locationService = inject(LocationService);
-  protected currentConditionsByZip: Signal<ConditionsAndZip[]> = this.weatherService.getCurrentConditions();
 
-  showForecast(zipcode : string){
-    this.router.navigate(['/forecast', zipcode])
+  selectedIndex = signal(0);
+
+  protected currentConditionsByZip: Signal<ConditionsAndZip[]> =
+    this.weatherService.getCurrentConditions();
+  protected tabDatas = computed(() =>
+    this.currentConditionsByZip().map<TabData<ConditionsAndZip>>(
+      (condition) => ({
+        id: condition.zip,
+        title: `${condition?.data?.name ?? "unknown"} (${condition.zip})`,
+        data: condition,
+      })
+    )
+  );
+
+  constructor() {
+    // continue on tab, where user left the page
+    const storedTabIndex = localStorage.getItem(KEY_TAB_INDEX);
+    if (storedTabIndex) {
+      this.selectedIndex.set(+storedTabIndex);
+    }
+
+    effect(() =>
+      localStorage.setItem(KEY_TAB_INDEX, this.selectedIndex().toString())
+    );
+  }
+
+  removeLocation(zipcode: string) {
+    this.locationService.removeLocation(zipcode);
   }
 }

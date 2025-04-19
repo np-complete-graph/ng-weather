@@ -1,14 +1,22 @@
-import { ModuleWithProviders }  from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-import {ForecastsListComponent} from "./forecasts-list/forecasts-list.component";
-import {MainPageComponent} from "./main-page/main-page.component";
+import { ModuleWithProviders } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
+import { MainPageComponent } from "./main-page/main-page.component";
 
 const appRoutes: Routes = [
   {
-    path: '', component: MainPageComponent
+    path: "",
+    component: MainPageComponent,
   },
   {
-    path: 'forecast/:zipcode', component: ForecastsListComponent
-  }
+    // lazy load js content
+    path: "forecast/:zipcode",
+    loadComponent: () =>
+      import("./forecasts-list/forecasts-list.component").then(
+        (m) => m.ForecastsListComponent
+      ),
+  },
 ];
-export const routing: ModuleWithProviders<any> = RouterModule.forRoot(appRoutes, {});
+export const routing: ModuleWithProviders<any> = RouterModule.forRoot(
+  appRoutes,
+  {}
+);

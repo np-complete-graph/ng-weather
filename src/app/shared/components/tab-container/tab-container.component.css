@@ -1,0 +1,24 @@
+.tab-title-container {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.tab-title-container .item {
+  background: #0984e3;
+  padding: 8px;
+  min-width: 100px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+}
+
+.active {
+  background: #74b9ff !important;
+}
+
+.close {
+  margin-left: 8px;
+  cursor: pointer;
+  color: white;
+}

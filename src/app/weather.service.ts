@@ -99,7 +99,6 @@ export class WeatherService {
     fetchHandler: () => Observable<T>
   ): Observable<T> {
     const cachedItem = this.cachingService.getItem<T>(key);
-    console.log("Cached item", cachedItem);
     if (cachedItem) return of(cachedItem.data);
 
     return fetchHandler();

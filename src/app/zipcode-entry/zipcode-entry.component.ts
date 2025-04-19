@@ -1,21 +1,43 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
-import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from "@angular/core";
+import { rxResource } from "@angular/core/rxjs-interop";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { AutocompleteComponent } from "app/shared/components/autocomplete/autocomplete.component";
+import { map } from "rxjs/operators";
 import { LocationService } from "../location.service";
 
 @Component({
   selector: "app-zipcode-entry",
   templateUrl: "./zipcode-entry.component.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    AutocompleteComponent,
+  ],
 })
 export class ZipcodeEntryComponent {
-  private service = inject(LocationService);
+  private locationService = inject(LocationService);
 
-  public zipcodeInput = new FormControl<string>("");
+  public queryOrZipcode = signal<string>("");
+
+  public foundZipcodes = rxResource({
+    request: () => this.queryOrZipcode(),
+    loader: ({ request }) =>
+      this.locationService
+        .getZipcodesByName(request)
+        .pipe(
+          map((codes) => codes.map((code) => ({ id: code, description: code })))
+        ),
+  });
 
   addLocation(zipcode: string) {
-    this.service.addLocation(zipcode);
-    this.zipcodeInput.patchValue("");
+    this.locationService.addLocation(zipcode);
   }
 }
